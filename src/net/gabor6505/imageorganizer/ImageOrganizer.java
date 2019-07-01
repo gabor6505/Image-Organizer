@@ -1,13 +1,15 @@
 package net.gabor6505.imageorganizer;
 
+import net.gabor6505.imageorganizer.components.ImageLabel;
+import net.gabor6505.imageorganizer.components.KeyBindConfigWindow;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static javax.swing.JFileChooser.APPROVE_OPTION;
 
@@ -27,6 +29,9 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
     private final List<String> imageFolders = new ArrayList<>();
     private ImageCacheManager imageCache = null;
 
+    private KeyBindConfigWindow configWindow = null;
+    private final AtomicBoolean keyBindWindowVisible = new AtomicBoolean(false);
+
     public ImageOrganizer() {
         super();
         setupLookAndFeel();
@@ -36,51 +41,65 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
 
         setMinimumSize(new Dimension(320, 160));
-        setSize(1620, 950);
+        setSize(1620, 975);
         setLocationRelativeTo(null);
-        setVisible(true);
 
         setupComponents();
+
+        setVisible(true);
     }
 
     private void setupComponents() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
-        setContentPane(panel);
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        setContentPane(mainPanel);
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BorderLayout());
+        JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBackground(Color.GRAY);
-        panel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
 
-        imageLabel = new ImageLabel();
-        imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        Utils.fixSize(imageLabel, 1600, 900);
-        centerPanel.add(imageLabel, BorderLayout.CENTER);
+        {
+            // IMAGE LABEL
+            imageLabel = new ImageLabel();
+            imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            Utils.fixSize(imageLabel, 1600, 900);
+            centerPanel.add(imageLabel, BorderLayout.CENTER);
+        }
 
-        JPanel northPanel = new JPanel();
-        northPanel.setLayout(new BorderLayout());
-        panel.add(northPanel, BorderLayout.NORTH);
+        JPanel northPanel = new JPanel(new BorderLayout());
+        mainPanel.add(northPanel, BorderLayout.NORTH);
 
-        selectedFolderLabel = new JLabel("No folder is selected");
-        selectedFolderLabel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
-        northPanel.add(selectedFolderLabel, BorderLayout.CENTER);
+        {
+            // SELECTED FOLDER LABEL
+            selectedFolderLabel = new JLabel("No folder is selected");
+            selectedFolderLabel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+            northPanel.add(selectedFolderLabel, BorderLayout.CENTER);
 
-        JPanel eastNorthPanel = new JPanel();
-        northPanel.add(eastNorthPanel, BorderLayout.EAST);
+            JPanel eastNorthPanel = new JPanel();
+            northPanel.add(eastNorthPanel, BorderLayout.EAST);
 
-        JCheckBox cacheCheckBox = new JCheckBox("Cache Images");
-        cacheCheckBox.addItemListener(e -> {
-            cacheImages = cacheCheckBox.isSelected();
-            System.out.println("Caching turned " + (cacheImages ? "on " : "off"));
-            if (cacheImages && imageCache != null) imageCache.execute();
-        });
-        eastNorthPanel.add(cacheCheckBox);
+            {
+                // CACHE CHECKBOX
+                JCheckBox cacheCheckBox = new JCheckBox("Cache Images");
+                cacheCheckBox.addItemListener(e -> {
+                    cacheImages = cacheCheckBox.isSelected();
+                    System.out.println("Caching turned " + (cacheImages ? "on " : "off"));
+                    if (cacheImages && imageCache != null) imageCache.executeTask();
+                });
+                eastNorthPanel.add(cacheCheckBox);
 
-        JButton selectFolderBtn = new JButton("Select...");
-        selectFolderBtn.addActionListener(e -> selectFolder());
-        eastNorthPanel.add(selectFolderBtn);
+                // SELECT BUTTON
+                JButton selectFolderBtn = new JButton("Select...");
+                selectFolderBtn.addActionListener(e -> selectFolder());
+                eastNorthPanel.add(selectFolderBtn);
 
+                // KEYBIND CONFIG BUTTON
+                JButton keyBindCfgBtn = new JButton("Keybinds...");
+                keyBindCfgBtn.addActionListener(e -> keyBindConfig());
+                eastNorthPanel.add(keyBindCfgBtn);
+            }
+        }
+
+        // PROGRESS BAR
         cacheProgressBar = new JProgressBar() {
             @Override
             public Dimension getPreferredSize() {
@@ -92,9 +111,7 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
         cacheProgressBar.setIndeterminate(false);
         cacheProgressBar.setStringPainted(true);
         cacheProgressBar.setVisible(false);
-        panel.add(cacheProgressBar, BorderLayout.PAGE_END);
-
-        panel.revalidate();
+        mainPanel.add(cacheProgressBar, BorderLayout.PAGE_END);
     }
 
     private void setupLookAndFeel() {
@@ -155,10 +172,12 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
         workFolder = directory.getPath();
         selectedFolderLabel.setText("Selected folder: " + workFolder);
         imageNames.clear();
+        imageFolders.clear();
         imageIndex = -1;
         loadImages();
     }
 
+    // TODO also load images from the 1st level subfolders (so that images previously moved can still be modified after app restart) - this should be a toggleable setting
     private void loadImages() {
         System.out.println("Loading image names...");
 
@@ -179,7 +198,9 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
             System.out.println(f.getName());
         }
 
-        imageCache = new ImageCacheManager(imageNames, workFolder, cacheProgressBar);
+        imageFolders.addAll(Collections.nCopies(imageNames.size(), ""));
+
+        imageCache = new ImageCacheManager(imageNames, imageFolders, workFolder, cacheProgressBar);
         if (cacheImages) imageCache.executeTask();
 
         // Initial step from -1 to 0 position
@@ -192,6 +213,7 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
      * @param direction The direction of the step, false meaning left and true meaning right
      */
     private void stepImage(boolean direction) {
+        // Calculate new index
         if (direction) {
             if (imageNames.size() > imageIndex + 1) imageIndex++;
             else return;
@@ -200,29 +222,71 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
             else return;
         }
 
-        System.out.println("Stepping to image #" + imageIndex + "!");
-
+        // Request new image and set it as the icon for the label
         if (imageCache != null) {
             imageLabel.setIcon(imageCache.requestImage(imageIndex, 1600, 900));
             System.out.println("Stepped to image #" + imageIndex + "!");
         }
+
+        updateTitle();
+    }
+
+    private void keyBindConfig() {
+        if (keyBindWindowVisible.get()) {
+            if (configWindow != null) configWindow.requestFocus();
+        } else {
+            keyBindWindowVisible.set(true);
+            configWindow = new KeyBindConfigWindow(this, keyBindWindowVisible);
+        }
+    }
+
+    private void moveImage(String destFolder) {
+        if (destFolder.isEmpty()) return;
+        File destDir = new File(workFolder + File.separator + destFolder);
+        if (!destDir.exists()) if (!destDir.mkdirs()) System.err.println("Failed to create dirs for image move!");
+
+        File currentImage;
+        if (imageFolders.get(imageIndex).isEmpty()) {
+            currentImage = new File(workFolder + File.separator + imageNames.get(imageIndex));
+        } else {
+            currentImage = new File(workFolder + File.separator + imageFolders.get(imageIndex) + File.separator + imageNames.get(imageIndex));
+        }
+
+        if (!currentImage.renameTo(new File(destDir.getPath() + File.separator + imageNames.get(imageIndex)))) {
+            System.err.println("Failed to move image!");
+        } else {
+            imageFolders.set(imageIndex, destFolder);
+            updateTitle();
+        }
+    }
+
+    private void updateTitle() {
+        // Display new image name and folder in the title
+        String format = "%s - %s";
+        if (!imageFolders.get(imageIndex).isEmpty()) format += " - Moved to %s";
+        setTitle(String.format(format, TITLE, imageNames.get(imageIndex), imageFolders.get(imageIndex)));
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
-        if (e.getID() != KeyEvent.KEY_PRESSED) return false;
+        if (e.getID() != KeyEvent.KEY_PRESSED || !isFocused() || imageNames.size() < 1) return false;
 
-        // TODO shortcut editor window for specifying the association between folders and keys (which key moves image to which folder)
+        for (Integer keyCode : PreferenceManager.getKeyBindMap().keySet()) {
+            if (e.getKeyCode() == keyCode) {
+                moveImage(PreferenceManager.getKeyBindMap().get(keyCode));
+                return true;
+            }
+        }
 
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT:
             case KeyEvent.VK_KP_LEFT:
                 stepImage(false);
-                break;
+                return true;
             case KeyEvent.VK_RIGHT:
             case KeyEvent.VK_KP_RIGHT:
                 stepImage(true);
-                break;
+                return true;
         }
 
         return false;

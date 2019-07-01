@@ -14,6 +14,7 @@ import java.util.List;
 public class ImageCacheManager extends SwingWorker<List<BufferedImage>, Integer> {
 
     private final List<String> imageNames;
+    private final List<String> imageFolders;
     private String workFolder;
     private final JProgressBar progressBar;
 
@@ -23,8 +24,11 @@ public class ImageCacheManager extends SwingWorker<List<BufferedImage>, Integer>
     private static int LOAD_COUNT = -1;
     private final int loadID;
 
-    public ImageCacheManager(List<String> imageNames, String workFolder, JProgressBar progressBar) {
+    private boolean alreadyExecuted = false;
+
+    public ImageCacheManager(List<String> imageNames, List<String> imageFolders, String workFolder, JProgressBar progressBar) {
         this.imageNames = imageNames;
+        this.imageFolders = imageFolders;
         this.workFolder = workFolder;
         this.progressBar = progressBar;
 
@@ -36,6 +40,8 @@ public class ImageCacheManager extends SwingWorker<List<BufferedImage>, Integer>
     }
 
     public void executeTask() {
+        if (alreadyExecuted) return;
+        alreadyExecuted = true;
         progressBar.setVisible(true);
         progressBar.getParent().revalidate();
         progressBar.setMaximum(imageNames.size());
@@ -62,7 +68,7 @@ public class ImageCacheManager extends SwingWorker<List<BufferedImage>, Integer>
                 }
                 cache.set(i, ImageIO.read(new File(workFolder + File.separator + imageNames.get(i))));
             } catch (IOException e) {
-                System.out.println("Error occurred while caching!");
+                System.err.println("Error occurred while caching!");
             }
             System.out.println("Caching " + imageNames.get(i));
             publish(i + 1);
@@ -108,7 +114,7 @@ public class ImageCacheManager extends SwingWorker<List<BufferedImage>, Integer>
             try {
                 cache.set(index, ImageIO.read(new File(workFolder + File.separator + imageNames.get(index))));
             } catch (IOException e) {
-                System.out.println("Error occurred while caching high priority image!");
+                System.err.println("Error occurred while caching high priority image!");
             }
         }
         if (cache.get(index) == null) return null;

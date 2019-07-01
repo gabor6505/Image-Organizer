@@ -1,4 +1,4 @@
-package net.gabor6505.imageorganizer;
+package net.gabor6505.imageorganizer.components;
 
 import javax.swing.*;
 
