@@ -5,8 +5,12 @@ import net.gabor6505.imageorganizer.PreferenceManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class KeyBindButton extends JButton implements MouseListener, KeyListener, FocusListener {
+
+    private final static List<Integer> reservedKeys = Arrays.asList(KeyEvent.VK_LEFT, KeyEvent.VK_KP_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_KP_RIGHT, KeyEvent.VK_ESCAPE, KeyEvent.VK_DELETE);
 
     private int keyCode;
     private final JTextField folderNameTextField;
@@ -48,9 +52,9 @@ public class KeyBindButton extends JButton implements MouseListener, KeyListener
 
     private boolean validateKeyCode(int code) {
         if (code <= 0) return false;
-        if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_KP_LEFT || code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_KP_RIGHT || code == KeyEvent.VK_ESCAPE) return false;
+        if (reservedKeys.contains(code)) return false;
 
-        for (Integer keyCode : PreferenceManager.getOccupiedKeyCodes()) {
+        for (Integer keyCode : PreferenceManager.getKeyBindMap().getKeyCodes()) {
             if (code == keyCode) return false;
         }
 
@@ -63,24 +67,16 @@ public class KeyBindButton extends JButton implements MouseListener, KeyListener
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
-
-    }
+    public void mousePressed(MouseEvent e) { }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
+    public void mouseReleased(MouseEvent e) { }
 
     @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
+    public void mouseEntered(MouseEvent e) { }
 
     @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
+    public void mouseExited(MouseEvent e) { }
 
     @Override
     public void focusGained(FocusEvent e) {
@@ -94,9 +90,7 @@ public class KeyBindButton extends JButton implements MouseListener, KeyListener
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {
-
-    }
+    public void keyTyped(KeyEvent e) { }
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -119,7 +113,5 @@ public class KeyBindButton extends JButton implements MouseListener, KeyListener
     }
 
     @Override
-    public void keyReleased(KeyEvent e) {
-
-    }
+    public void keyReleased(KeyEvent e) { }
 }

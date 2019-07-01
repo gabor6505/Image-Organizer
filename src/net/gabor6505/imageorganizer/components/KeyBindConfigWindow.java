@@ -1,5 +1,6 @@
 package net.gabor6505.imageorganizer.components;
 
+import net.gabor6505.imageorganizer.KeyBindMap;
 import net.gabor6505.imageorganizer.MouseWheelController;
 import net.gabor6505.imageorganizer.PreferenceManager;
 
@@ -7,8 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.security.Key;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class KeyBindConfigWindow extends JFrame implements KeyEventDispatcher, WindowListener {
@@ -55,9 +54,9 @@ public class KeyBindConfigWindow extends JFrame implements KeyEventDispatcher, W
     }
 
     private void setupKeyBindComponents() {
-        Map<Integer, String> keyBindMap = PreferenceManager.getKeyBindMap();
+        KeyBindMap keyBindMap = PreferenceManager.getKeyBindMap();
 
-        for (Integer keyCode : keyBindMap.keySet()) {
+        for (Integer keyCode : keyBindMap.getKeyCodes()) {
             insertRow(keyCode, keyBindMap.get(keyCode));
         }
     }
@@ -104,10 +103,11 @@ public class KeyBindConfigWindow extends JFrame implements KeyEventDispatcher, W
         JButton removeBtn = new JButton("X");
         removeBtn.addActionListener(e -> {
             centerPanel.remove(btn);
+            centerPanel.validate();
             centerPanel.remove(textField);
+            centerPanel.validate();
             centerPanel.remove(removeBtn);
-            revalidate();
-            // TODO fix gui glitch when removing rows
+            centerPanel.validate();
             if (btn.getKeyCode() != -1) PreferenceManager.removeKeyBind(btn.getKeyCode());
         });
         removeBtn.setFont(btn.getFont().deriveFont(15f));
@@ -133,25 +133,8 @@ public class KeyBindConfigWindow extends JFrame implements KeyEventDispatcher, W
         return false;
     }
 
-    /*@Override
-    public void keyTyped(KeyEvent e) {
-
-    }
-
     @Override
-    public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) dispose();
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-
-    }*/
-
-    @Override
-    public void windowOpened(WindowEvent e) {
-
-    }
+    public void windowOpened(WindowEvent e) { }
 
     @Override
     public void windowClosing(WindowEvent e) {
@@ -159,27 +142,17 @@ public class KeyBindConfigWindow extends JFrame implements KeyEventDispatcher, W
     }
 
     @Override
-    public void windowClosed(WindowEvent e) {
-
-    }
+    public void windowClosed(WindowEvent e) { }
 
     @Override
-    public void windowIconified(WindowEvent e) {
-
-    }
+    public void windowIconified(WindowEvent e) { }
 
     @Override
-    public void windowDeiconified(WindowEvent e) {
-
-    }
+    public void windowDeiconified(WindowEvent e) { }
 
     @Override
-    public void windowActivated(WindowEvent e) {
-
-    }
+    public void windowActivated(WindowEvent e) { }
 
     @Override
-    public void windowDeactivated(WindowEvent e) {
-
-    }
+    public void windowDeactivated(WindowEvent e) { }
 }

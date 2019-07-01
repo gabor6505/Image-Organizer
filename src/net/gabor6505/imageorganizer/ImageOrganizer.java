@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,18 +57,15 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBackground(Color.GRAY);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
-
         {
             // IMAGE LABEL
             imageLabel = new ImageLabel();
             imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            Utils.fixSize(imageLabel, 1600, 900);
             centerPanel.add(imageLabel, BorderLayout.CENTER);
         }
 
         JPanel northPanel = new JPanel(new BorderLayout());
         mainPanel.add(northPanel, BorderLayout.NORTH);
-
         {
             // SELECTED FOLDER LABEL
             selectedFolderLabel = new JLabel("No folder is selected");
@@ -76,7 +74,6 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
 
             JPanel eastNorthPanel = new JPanel();
             northPanel.add(eastNorthPanel, BorderLayout.EAST);
-
             {
                 // CACHE CHECKBOX
                 JCheckBox cacheCheckBox = new JCheckBox("Cache Images");
@@ -224,7 +221,8 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
 
         // Request new image and set it as the icon for the label
         if (imageCache != null) {
-            imageLabel.setIcon(imageCache.requestImage(imageIndex, 1600, 900));
+            //imageLabel.setIcon(imageCache.requestImage(imageIndex, 1600, 900));
+            imageLabel.setImage(imageCache.requestRawImage(imageIndex));
             System.out.println("Stepped to image #" + imageIndex + "!");
         }
 
@@ -271,7 +269,9 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
     public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getID() != KeyEvent.KEY_PRESSED || !isFocused() || imageNames.size() < 1) return false;
 
-        for (Integer keyCode : PreferenceManager.getKeyBindMap().keySet()) {
+        // TODO Implement some kind of way to delete images (either to the recycle bin or a trash folder)
+
+        for (Integer keyCode : PreferenceManager.getKeyBindMap().getKeyCodes()) {
             if (e.getKeyCode() == keyCode) {
                 moveImage(PreferenceManager.getKeyBindMap().get(keyCode));
                 return true;

@@ -107,6 +107,13 @@ public class ImageCacheManager extends SwingWorker<List<BufferedImage>, Integer>
         return new ImageIcon(rawImage.getScaledInstance(width, height, Image.SCALE_SMOOTH));
     }
 
+    /**
+     * Request a BufferedImage from the cache
+     * If the image at the requested index is not yet cached, it gets cached and returned by a high priority background operation
+     *
+     * @param index The index of the image in the cache
+     * @return The image, either from the cache or from disk, or null if the index is out of bounds
+     */
     public BufferedImage requestRawImage(int index) {
         if (cache.size() <= index) return null;
         if (cache.get(index) == null) {

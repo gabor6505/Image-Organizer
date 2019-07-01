@@ -29,8 +29,7 @@ public class PreferenceManager {
             "    </KeyBinds>",
             "</root>");
 
-    // TODO move to a different map implementation (probably 2 arraylists), bc keys cant be edited in a way which preserves the order of entries
-    private static Map<Integer, String> keyBindMap = new LinkedHashMap<>();
+    private static KeyBindMap keyBindMap = new KeyBindMap();
 
     static {
         AtomicBoolean docNeedsRepair = new AtomicBoolean(false);
@@ -89,12 +88,8 @@ public class PreferenceManager {
 
     }
 
-    public static Map<Integer, String> getKeyBindMap() {
+    public static KeyBindMap getKeyBindMap() {
         return keyBindMap;
-    }
-
-    public static ArrayList<Integer> getOccupiedKeyCodes() {
-        return new ArrayList<>(keyBindMap.keySet());
     }
 
     public static void updateKeyBindFolder(int code, String newFolderName) {
@@ -105,9 +100,7 @@ public class PreferenceManager {
 
     public static void updateKeyBindCode(int oldCode, int newCode) {
         System.out.println("Updated keybind code!");
-        String folderName = keyBindMap.get(oldCode);
-        keyBindMap.remove(oldCode);
-        keyBindMap.put(newCode, folderName);
+        keyBindMap.replaceCode(oldCode, newCode);
         saveKeyBindsToDisk();
     }
 
@@ -132,7 +125,7 @@ public class PreferenceManager {
 
             Element keyBinds = doc.createElement(KEYBIND_ROOT_NODE_NAME);
 
-            for (Integer code : keyBindMap.keySet()) {
+            for (Integer code : keyBindMap.getKeyCodes()) {
                 Element keyBind = doc.createElement(KEYBIND_NODE_NAME);
                 keyBind.setAttribute("code", String.valueOf(code));
                 keyBind.appendChild(doc.createTextNode(keyBindMap.get(code)));

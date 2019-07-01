@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+// TODO this class should probably be deleted
 public final class Utils {
 
     private Utils() {
