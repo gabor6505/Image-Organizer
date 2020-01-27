@@ -184,7 +184,7 @@ public class ImageOrganizer extends JFrame implements KeyEventDispatcher {
             return;
         }
 
-        File[] images = dir.listFiles((d, name) -> name.endsWith(".png") || name.endsWith(".jpg"));
+        File[] images = dir.listFiles((d, name) -> name.toLowerCase().endsWith(".png") || name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg") || name.toLowerCase().endsWith(".jpg"));
         if (images == null) return;
 
         Arrays.sort(images, Comparator.comparingLong(File::lastModified));
