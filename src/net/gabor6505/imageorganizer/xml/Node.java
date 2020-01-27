@@ -1,12 +1,10 @@
 package net.gabor6505.imageorganizer.xml;
 
-import com.sun.istack.internal.Nullable;
-
 public class Node extends NodeList {
 
     private final org.w3c.dom.Node node;
 
-    public Node(@Nullable org.w3c.dom.Node node) {
+    public Node(org.w3c.dom.Node node) {
         super(node.getChildNodes());
         this.node = node;
     }

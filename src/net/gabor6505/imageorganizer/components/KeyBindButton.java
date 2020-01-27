@@ -10,7 +10,7 @@ import java.util.List;
 
 public class KeyBindButton extends JButton implements MouseListener, KeyListener, FocusListener {
 
-    private final static List<Integer> reservedKeys = Arrays.asList(KeyEvent.VK_LEFT, KeyEvent.VK_KP_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_KP_RIGHT, KeyEvent.VK_ESCAPE, KeyEvent.VK_DELETE);
+    private final static List<Integer> reservedKeys = Arrays.asList(KeyEvent.VK_LEFT, KeyEvent.VK_KP_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_KP_RIGHT, KeyEvent.VK_ESCAPE);
 
     private int keyCode;
     private final JTextField folderNameTextField;
